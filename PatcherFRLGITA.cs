@@ -52,11 +52,11 @@
             //BLOB & SAVE ZONE
             int blobOff = Utils.FindFirstFreeForBlob(outRom, (Utils.AlignUp(BLOB.Length, 0x10000) + 0x50000), 0, 0, "blob", 0x1000, new() { });
             uint blobBase = Utils.ROM_BASE + (uint)blobOff;
-            Console.WriteLine($"[INFO] BLOB rilocato a {blobOff:X}");
+            Console.WriteLine($"[INFO] blob relocated at {blobOff:X}");
             Utils.CopyBlobAndFixInternals(outRom, BLOB, originalBlobPosition, blobOff, toReplaceCalls, toReplaceCallsFirst);
             Utils.PatchROMStartOffsetToBlob(outRom, blobBase);
             int saveOff = Utils.AlignUp(blobOff, 0x10000) + 0x20000;
-            Console.WriteLine($"[INFO] Save base rilocata a {saveOff:X}");
+            Console.WriteLine($"[INFO] Save base relocated at {saveOff:X}");
             Utils.PatchSaveBase(outRom, blobOff, BLOB.Length, (byte)((originalSavePosition >> 16) & 0xFF), (byte)((saveOff >> 16) & 0xFF));
             //CODE PATCHES
             int ep1 = Utils.FindPatternForPatch(outRom, EP1_ORIG_TAIL, true);

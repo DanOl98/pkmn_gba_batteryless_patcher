@@ -56,7 +56,7 @@
 
                     this.Invoke(new Action(() => MessageBox.Show(this, $"Patch applied!\nSaved as:\n{outPath}",
                         "OK", MessageBoxButtons.OK, MessageBoxIcon.Information)));
-                    this.Invoke(new Action(() => enableDisableControls(true)));
+
 
                 }
                 catch (Exception ex)
@@ -65,6 +65,10 @@
                     Console.WriteLine($"[ERR] Stacktrace: {ex.StackTrace}");
                     this.Invoke(new Action(() => MessageBox.Show(this, ex.Message, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error)));
 
+                }
+                finally
+                {
+                    this.Invoke(new Action(() => enableDisableControls(true)));
                 }
             }).Start();
         }
@@ -102,7 +106,6 @@
 
                     this.Invoke(new Action(() => MessageBox.Show(this, $"Patch applied!\nSaved as:\n{outPath}",
                         "OK", MessageBoxButtons.OK, MessageBoxIcon.Information)));
-                    this.Invoke(new Action(() => enableDisableControls(true)));
 
                 }
                 catch (Exception ex)
@@ -111,6 +114,10 @@
                     Console.WriteLine($"[ERR] Stacktrace: {ex.StackTrace}");
                     this.Invoke(new Action(() => MessageBox.Show(this, ex.Message, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error)));
 
+                }
+                finally
+                {
+                    this.Invoke(new Action(() => enableDisableControls(true)));
                 }
             }).Start();
         }
@@ -158,6 +165,10 @@
                     this.Invoke(new Action(() => MessageBox.Show(this, ex.Message, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error)));
 
                 }
+                finally
+                {
+                    this.Invoke(new Action(() => enableDisableControls(true)));
+                }
             }).Start();
         }
 
@@ -191,7 +202,6 @@
 
                     this.Invoke(new Action(() => MessageBox.Show(this, $"Repacked!\nSaved as:\n{outPath}",
                         "OK", MessageBoxButtons.OK, MessageBoxIcon.Information)));
-                    this.Invoke(new Action(() => enableDisableControls(true)));
 
                 }
                 catch (Exception ex)
@@ -200,6 +210,10 @@
                     Console.WriteLine($"[ERR] Stacktrace: {ex.StackTrace}");
                     this.Invoke(new Action(() => MessageBox.Show(this, ex.Message, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error)));
 
+                }
+                finally
+                {
+                    this.Invoke(new Action(() => enableDisableControls(true)));
                 }
             }).Start();
         }

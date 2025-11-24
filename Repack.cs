@@ -10,9 +10,9 @@ namespace BatterylessPatcher
 
         class Options
         {
-            public int Align = 0x20;
+            public int Align = 0x04;
             public bool AlsoThumb = true;
-            public string TruncateMode = "no"; // "no", "refs", "keep_orphans"
+            public string TruncateMode = "auto"; // "no", "refs", "keep_orphans"
         }
 
 
@@ -155,7 +155,7 @@ namespace BatterylessPatcher
                 Console.WriteLine($"[INFO] LZ blocks found: {blocks2.Count}");
                 int highestRefTrunc = data.Length;
                 int highestOrphanTrunc = data.Length;
-                if (opt.TruncateMode != "16m")
+                if (opt.TruncateMode != "16m" && opt.TruncateMode != "32m" && opt.TruncateMode!= "auto")
                 {
                     for (int i = 0; i < blocks2.Count; i++)
                     {
@@ -174,7 +174,6 @@ namespace BatterylessPatcher
                         Console.Write($"\r[SCAN] scanning to truncate - {(i + 1).ToString().PadLeft(5, '0')}/{blocks2.Count.ToString().PadLeft(5, '0')} (0x{(blk.Offset.ToString("X").PadLeft(6, '0'))})");
                     }
                 }
-                Console.Write("\r\n");
                 int truncSize = -1;
                 if (opt.TruncateMode == "refs")
                 {
@@ -192,19 +191,37 @@ namespace BatterylessPatcher
                 {
                     truncSize = 0x02000000;
                 }
+                else if (opt.TruncateMode == "auto")
+                {
+                    //sometimes in the end there is junk (some 00)
+                    if(Utils.IsEmptyAfterOffsetConsideringZeroValid(0x01000000, data))
+                    {
+                        truncSize = 0x01000000;
+                    }else if (Utils.IsEmptyAfterOffsetConsideringZeroValid(0x02000000, data))
+                    {
+                        truncSize = 0x02000000;
+                    }
+                }
                 int truncLen = data.Length - truncSize;
                 //sometimes in the end there is junk (some 00)
-                int freebytes = Utils.FreeAtConsideringZeroValid(truncSize, truncLen, data);
-                if (freebytes >= truncLen)
+                if (truncLen != data.Length)
                 {
-                    byte[] data2 = new byte[truncSize];
-                    Buffer.BlockCopy(data, 0, data2, 0, truncSize);
-                    data = data2;
-                    Console.WriteLine($"[INFO] truncated to {truncSize}");
+                    int freebytes = Utils.FreeAtConsideringZeroValid(truncSize, truncLen, data);
+                    if (freebytes >= truncLen)
+                    {
+                        byte[] data2 = new byte[truncSize];
+                        Buffer.BlockCopy(data, 0, data2, 0, truncSize);
+                        data = data2;
+                        Console.WriteLine($"[INFO] truncated to {truncSize}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[ERR] cannot truncate at requested mode - data not empty ({freebytes}/{truncLen})");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"[ERR] cannot truncate at requested mode - data not empty ({freebytes}/{truncLen})");
+                    Console.WriteLine($"[INFO] no need to truncate");
                 }
             }
             Console.WriteLine($"[INFO] repacked");

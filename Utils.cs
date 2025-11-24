@@ -119,6 +119,12 @@
             for (int i = off; i < off + size; i++) if (rom[i] != 0xFF && rom[i] != 0x00) return fr; else fr++;
             return fr;
         }
+        public static bool IsEmptyAfterOffsetConsideringZeroValid(int off, byte[] rom)
+        {
+            if (off < 0) return false;
+            for (int i = off; i < rom.Length; i++) if (rom[i] != 0xFF && rom[i] != 0x00) return false;
+            return true;
+        }
         public static int FindFirstFreeForBlob(byte[] rom, int size, int preferred, int minStart, String type = "blob", int positionMultipleOf = 0x1000, List<ForbiddenArea> ? forbiddenAreas = null)
         {
             if (size <= 0) throw new ArgumentException($"Dimensione {type} nulla.");
@@ -783,7 +789,7 @@
             int pos = FindPattern(rom, preContext, 0);
             if (pos < 0)
             {
-                Console.WriteLine("[PATCH] RTC Check not found");
+                Console.WriteLine("[PATCH] RTC Check not found (NOTE: this check is present only on Ruby/Sapphire)");
                 return -1;
             }
             int chkAt = pos + preContext.Length;
