@@ -39,6 +39,7 @@
                 try
                 {
 
+                    Console.WriteLine($"[INFO] Starting to patch {txtRomPath.Text}");
 
                     byte[] rom = File.ReadAllBytes(txtRomPath.Text);
 
@@ -89,6 +90,8 @@
                 try
                 {
 
+                    Console.WriteLine($"[INFO] Starting to patch {txtRomPath.Text}");
+
 
                     byte[] rom = File.ReadAllBytes(txtRomPath.Text);
 
@@ -138,6 +141,7 @@
                 try
                 {
 
+                    Console.WriteLine($"[INFO] Starting to patch {txtRomPath.Text}");
 
                     byte[] rom = File.ReadAllBytes(txtRomPath.Text);
 
@@ -187,6 +191,7 @@
                 try
                 {
 
+                    Console.WriteLine($"[INFO] Starting to patch {txtRomPath.Text}");
 
                     byte[] rom = File.ReadAllBytes(txtRomPath.Text);
 

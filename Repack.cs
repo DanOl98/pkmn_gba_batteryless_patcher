@@ -36,7 +36,6 @@ namespace BatterylessPatcher
                 var blk = allLz[i];
                 int src = blk.Offset;
                 int size = blk.Size;
-                uint addr = PTR_BASE + (uint)blk.Offset;
                 // azzera sorgente (PRIMA SE NO SOVRASCRIVO ROBA COPIATA SOPRA!!
 
                 for (int x = 0; x < size; x++)
@@ -47,7 +46,7 @@ namespace BatterylessPatcher
 
             //ordino per size in modo da non andarmi sopra
             allLz.Sort((a, b) =>
-             {   
+             {
                  return a.Size.CompareTo(b.Size);
              });
             //allLz = allLz.OrderBy(o => o.Size).ToList();
@@ -74,7 +73,7 @@ namespace BatterylessPatcher
                 {
                     byte[] decompressed = Utils.LzDecompress(originalData, (int)blk.Offset);
                     int looksLike = Utils.IsLikelyValidLz(decompressed);
-                    
+
                     Console.WriteLine($"[ERR] invalid size at offset 0x{blk.Offset:x}, size {blk.Size}, expanded {blk.ExpandedSize}, size {decompressed.Length}, looked like {looksLike}");
                     continue;
                 }
@@ -89,10 +88,12 @@ namespace BatterylessPatcher
                 uint newAddr = PTR_BASE + (uint)dst;
                 //var refs2 = ScanPointerPositions(originalData, addr, opt.AlsoThumb);
                 //modifico nel nuovo
+                blk.Offset = dst;
+                lastSize = size;
                 foreach (var (off, isThumb) in refs)
                 {
                     uint v = newAddr;
-                    if (Utils.isInsideBlock(off, off + 4, allLz)==null)
+                    if (Utils.isInsideBlock(off, off + 4, allLz) == null)
                     {
                         if (opt.AlsoThumb && isThumb) v |= 1;
                         Utils.WriteU32(data, off, v);
@@ -114,8 +115,6 @@ namespace BatterylessPatcher
                 }
                 Console.Write($"\r[MOVE] moving blocks - {(i + 1).ToString().PadLeft(5, '0')}/{allLz.Count.ToString().PadLeft(5, '0')} (0x{(src.ToString("X").PadLeft(6, '0'))})");
                 //modifico per quando controllo puntatori per evitare di andare a scrivere un finto puntatore in una zona dentro a un blocco
-                blk.Offset = dst;
-                lastSize = size;
             }
             Console.Write("\r\n");
 
@@ -151,11 +150,11 @@ namespace BatterylessPatcher
             // truncate opzionale
             if (!skipTruncate)
             {
-               
+
                 Console.WriteLine($"[INFO] LZ blocks found: {blocks2.Count}");
                 int highestRefTrunc = data.Length;
                 int highestOrphanTrunc = data.Length;
-                if (opt.TruncateMode != "16m" && opt.TruncateMode != "32m" && opt.TruncateMode!= "auto")
+                if (opt.TruncateMode != "16m" && opt.TruncateMode != "32m" && opt.TruncateMode != "auto")
                 {
                     for (int i = 0; i < blocks2.Count; i++)
                     {
@@ -194,10 +193,11 @@ namespace BatterylessPatcher
                 else if (opt.TruncateMode == "auto")
                 {
                     //sometimes in the end there is junk (some 00)
-                    if(Utils.IsEmptyAfterOffsetConsideringZeroValid(0x01000000, data))
+                    if (Utils.IsEmptyAfterOffsetConsideringZeroValid(0x01000000, data))
                     {
                         truncSize = 0x01000000;
-                    }else if (Utils.IsEmptyAfterOffsetConsideringZeroValid(0x02000000, data))
+                    }
+                    else if (Utils.IsEmptyAfterOffsetConsideringZeroValid(0x02000000, data))
                     {
                         truncSize = 0x02000000;
                     }
@@ -240,26 +240,26 @@ namespace BatterylessPatcher
             {
                 if (data[i] == 0x10)
                 {
-                    bool isInPointer = false;
+                    /*bool isInPointer = false;
                     uint val = Utils.ReadU32(data, (i - (i % 4)));
                     if ((val & 0xFF000000) == 0x08000000)
                     {
                         isInPointer = true; 
                     }
                     if (!isInPointer)
+                    {*/
+                    int size = Utils.LzSize(data, (int)i);
+                    if (size > 0)
                     {
-                        int size = Utils.LzSize(data, (int)i);
-                        if (size > 0)
-                        {
 
-                            byte[] decompressed = Utils.LzDecompress(data, i);
-                            int type = Utils.IsLikelyValidLz(decompressed);
-                            if (type >= 0)
-                            {
-                                possibleBlocks.Add(new LzBlock(i, size, decompressed.Length, type));
-                            }
+                        byte[] decompressed = Utils.LzDecompress(data, i);
+                        int type = Utils.IsLikelyValidLz(decompressed);
+                        if (type >= 0)
+                        {
+                            possibleBlocks.Add(new LzBlock(i, size, decompressed.Length, type));
                         }
                     }
+                    //}
                 }
             }
 
@@ -309,7 +309,7 @@ namespace BatterylessPatcher
         }
 
 
-       
+
         static bool isPointerPresent(byte[] data, uint targetAddr, bool alsoThumb)
         {
             int n = data.Length;
