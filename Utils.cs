@@ -688,8 +688,8 @@
             int n = data.Length;
             if (o < 0 || o + 4 > n || data[o] != 0x10) return -1;
             int outLen = data[o + 1] | (data[o + 2] << 8) | (data[o + 3] << 16);
-            if (outLen <= 0 || outLen > 8 * 1024 * 1024) return -1; // sanity
-
+            if (outLen <= 0 || outLen > 8 * 1024 * 1024) return -5; // sanity
+            
             int si = o + 4;
             int produced = 0;
 
@@ -705,21 +705,21 @@
                     if ((flags & (0x80 >> bit)) == 0)
                     {
                         // literal
-                        if (si >= n) return -1;
+                        if (si >= n) return -2;
                         si++;
                         produced++;
                     }
                     else
                     {
                         // copy
-                        if (si + 1 >= n) return -1;
+                        if (si + 1 >= n) return -3;
                         byte hi = data[si++];
                         byte lo = data[si++];
 
                         int L = (hi >> 4) + 3;
                         int D = ((hi & 0x0F) << 8) | lo;
 
-                        if (D == 0 || D > produced) return -1;
+                        if (D == 0 || D > produced)return -4;                      
                         produced += L;
                     }
                 }

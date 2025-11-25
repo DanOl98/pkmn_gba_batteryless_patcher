@@ -37,7 +37,7 @@ This tool is a fully automated and relocatable batteryless save patcher for PokÃ
 ## Issues:
 
 ðŸŸ¡ Some heavily modified HACK Roms have problems with repacking. It may have something to do with some data (scripts?) placed far in the game data and incorrectly being identified as LZ blocks.  
-Not sure yet, but as of now I've observed this behavior only on 32mb roms, which cannot be patched anyway since as far as I know (correct me if I'm wrong) bootleg cartrides use addresses `0x09000000` to write on the SRAM so they wouldn't work anyway.  
+Not sure yet, but as of now I've observed this behavior only on 32mb roms, which cannot be patched anyway since as far as I know (correct me if I'm wrong) bootleg cartridges use addresses `0x09000000` to write on the SRAM so they wouldn't work anyway.  
 But, If by repacking the size went down to 16mb (doubt it, anyway), they could theoretically work.
 
 ---

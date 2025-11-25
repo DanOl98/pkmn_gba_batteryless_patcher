@@ -42,14 +42,25 @@
                 if (blobCheck == -1)
                 {
                     Console.WriteLine("[WARN] No enough space to put blob and save area, will try to relocate LZ blobs");
-                    Console.WriteLine("[WARN] WARNING!!! on heavily modified ROMs relocating could break something");
+                    repack = true;
+                }
+                if(outRom.Length> 0x01000000)
+                {
+                    Console.WriteLine("[WARN] ROM over 16M, will try to repack");
                     repack = true;
                 }
             }
             if (repack)
             {
+                Console.WriteLine("[WARN] WARNING!!! Repacking on heavily modified ROMs relocating could break something");
                 Console.WriteLine("[INFO] Repacking to apply patches");
-                outRom = Repack.repack(rom, new() { });
+                outRom = Repack.repack(rom, new() { }, "16m");
+            }
+            if (outRom.Length > 0x01000000)
+            {
+                String err = "[ERR] ROM over 16M, cannot patch";
+                Console.WriteLine(err);
+                throw new InvalidOperationException(err);
             }
             Console.WriteLine("[INFO] Applying patches");
             //SRAM PATCHES

@@ -12,11 +12,10 @@ namespace BatterylessPatcher
         {
             public int Align = 0x04;
             public bool AlsoThumb = true;
-            public string TruncateMode = "auto"; // "no", "refs", "keep_orphans"
+            
         }
 
-
-        public static byte[] repack(byte[] data, List<ForbiddenArea> forbiddenAreas)
+        public static byte[] repack(byte[] data, List<ForbiddenArea> forbiddenAreas, string TruncateMode = "auto")
         {
             byte[] originalData = new byte[data.Length];
             // copia
@@ -77,7 +76,7 @@ namespace BatterylessPatcher
             {
                 var blk = allLz[i];
                 uint addr = PTR_BASE + (uint)blk.Offset;
-                var refs = ScanPointerPositions(data, addr, opt.AlsoThumb);
+                var refs = ScanPointerPositionsFiltered(data, addr, opt.AlsoThumb, allLz);
                 int src = blk.Offset;
                 int size = blk.Size;
                 int dst = Utils.FindFirstFreeForSprite(data, size, lastMoved, opt.Align, forbiddenAreas, allLz, blk);
@@ -108,16 +107,8 @@ namespace BatterylessPatcher
                 foreach (var (off, isThumb) in refs)
                 {
                     uint v = newAddr;
-                    if (Utils.isInsideBlock(off, off + 4, allLz) == null)
-                    {
-                        if (opt.AlsoThumb && isThumb) v |= 1;
-                        Utils.WriteU32(data, off, v);
-                    }
-                    else
-                    {
-                        //skip fake pointers (bytes that loooked like a pointer to that but were data inside a lz block)
-                        //Console.WriteLine($"[WARN] pointer was inside block, skipped");
-                    }
+                    if (opt.AlsoThumb && isThumb) v |= 1;
+                    Utils.WriteU32(data, off, v);
                 }
 
                 if (refs.Count > 0)
@@ -157,11 +148,11 @@ namespace BatterylessPatcher
                 Console.WriteLine(err);
                 throw new InvalidOperationException(err);
             }
-            bool skipTruncate = opt.TruncateMode == "no";
+            bool skipTruncate = TruncateMode == "no";
             //skip if rom is already 16m and should truncate to 16m
-            skipTruncate = skipTruncate || (opt.TruncateMode == "16m" && data.Length == 0x01000000);
+            skipTruncate = skipTruncate || (TruncateMode == "16m" && data.Length == 0x01000000);
             //skip if rom is already 32m and should truncate to 32m
-            skipTruncate = skipTruncate || (opt.TruncateMode == "32m" && data.Length == 0x02000000);
+            skipTruncate = skipTruncate || (TruncateMode == "32m" && data.Length == 0x02000000);
             // truncate opzionale
             if (!skipTruncate)
             {
@@ -169,7 +160,7 @@ namespace BatterylessPatcher
                 Console.WriteLine($"[INFO] LZ blocks found: {blocks2.Count}");
                 int highestRefTrunc = data.Length;
                 int highestOrphanTrunc = data.Length;
-                if (opt.TruncateMode != "16m" && opt.TruncateMode != "32m" && opt.TruncateMode != "auto")
+                if (TruncateMode != "16m" && TruncateMode != "32m" && TruncateMode != "auto")
                 {
                     for (int i = 0; i < blocks2.Count; i++)
                     {
@@ -188,58 +179,53 @@ namespace BatterylessPatcher
                         Console.Write($"\r[SCAN] scanning to truncate - {(i + 1).ToString().PadLeft(5, '0')}/{blocks2.Count.ToString().PadLeft(5, '0')} (0x{(blk.Offset.ToString("X").PadLeft(6, '0'))})");
                     }
                 }
-                int truncSize = -1;
-                if (opt.TruncateMode == "refs")
+                int truncatedSize = -1;
+                if (TruncateMode == "refs")
                 {
-                    truncSize = highestRefTrunc;
+                    truncatedSize = highestRefTrunc;
                 }
-                else if (opt.TruncateMode == "keep_orphans")
+                else if (TruncateMode == "keep_orphans")
                 {
-                    truncSize = Math.Max(highestRefTrunc, highestOrphanTrunc);
+                    truncatedSize = Math.Max(highestRefTrunc, highestOrphanTrunc);
                 }
-                else if (opt.TruncateMode == "16m")
+                else if (TruncateMode == "16m")
                 {
-                    truncSize = 0x01000000;
+                    truncatedSize = 0x01000000;
                 }
-                else if (opt.TruncateMode == "32m")
+                else if (TruncateMode == "32m")
                 {
-                    truncSize = 0x02000000;
+                    truncatedSize = 0x02000000;
                 }
-                else if (opt.TruncateMode == "auto")
+                else if (TruncateMode == "auto")
                 {
                     //sometimes in the end there is junk (some 00)
                     if (Utils.IsEmptyAfterOffsetConsideringZeroValid(0x01000000, data))
                     {
-                        truncSize = 0x01000000;
+                        truncatedSize = 0x01000000;
                     }
                     else if (Utils.IsEmptyAfterOffsetConsideringZeroValid(0x02000000, data))
                     {
-                        truncSize = 0x02000000;
+                        truncatedSize = 0x02000000;
                     }
                 }
-                if (truncSize != -1)
+                if (truncatedSize != -1)
                 {
-                    int truncLen = data.Length - truncSize;
+                    int bytesToRemove = data.Length - truncatedSize;
                     //sometimes in the end there is junk (some 00)
-                    if (truncSize < data.Length)
+
+                    int freebytes = Utils.FreeAtConsideringZeroValid(truncatedSize, bytesToRemove, data);
+                    if (freebytes >= bytesToRemove)
                     {
-                        int freebytes = Utils.FreeAtConsideringZeroValid(truncSize, truncLen, data);
-                        if (freebytes >= truncLen)
-                        {
-                            byte[] data2 = new byte[truncSize];
-                            Buffer.BlockCopy(data, 0, data2, 0, truncSize);
-                            data = data2;
-                            Console.WriteLine($"[INFO] truncated to {truncSize}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"[ERR] cannot truncate at requested mode - data not empty ({freebytes}/{truncLen})");
-                        }
+                        byte[] data2 = new byte[truncatedSize];
+                        Buffer.BlockCopy(data, 0, data2, 0, truncatedSize);
+                        data = data2;
+                        Console.WriteLine($"[INFO] truncated to {truncatedSize}");
                     }
                     else
                     {
-                        Console.WriteLine($"[INFO] no need to truncate");
+                        Console.WriteLine($"[ERR] cannot truncate at requested mode - data not empty ({freebytes}/{bytesToRemove})");
                     }
+
                 }
                 else
                 {
@@ -249,6 +235,7 @@ namespace BatterylessPatcher
             Console.WriteLine($"[INFO] repacked");
             return data;
         }
+
 
 
         static List<LzBlock> ScanAllLzBlocks(byte[] data, uint scanStart, int minSize, Options opt)
@@ -286,6 +273,13 @@ namespace BatterylessPatcher
                             }
 
                         }
+                        else
+                        {
+                            if (i >= 0x01000000)
+                            {
+                                Console.WriteLine($"[INFO] invalid block at {i:X}, size {size}");
+                            }
+                        }
                     }
                 }
             }
@@ -311,22 +305,48 @@ namespace BatterylessPatcher
                 if (!inBlock)
                 {
 
-
-                    list.Add(new LzBlock(blk.Offset, blk.Size, blk.ExpandedSize, blk.type));
-                    while (i + 1 < count)
+                    bool use = true;
+                    int x = i;
+                    while (x + 1 < count)
                     {
-                        LzBlock next = possibleBlocks[i + 1];
+                        LzBlock next = possibleBlocks[x + 1];
                         if (!Utils.isSafeInBlock(next.Offset, next.getEnd(), blk))
                         {
+                            //NEED SOME WAY TO DISTINGUISH REAL POINTERS FROM SHIT THAT LOOKS LIKE POINTERS
+                            //ALSO NEEDED TO PATCH THEM!
 
+                            /*uint addr = PTR_BASE + (uint)blk.Offset;
+                            bool refs = isPointerPresentFiltered(data, addr, opt.AlsoThumb, list);
+                            uint addrNext = PTR_BASE + (uint)next.Offset;
+                            bool refsNext = isPointerPresentFiltered(data, addrNext, opt.AlsoThumb, list);
+                            if(refs && !refsNext)
+                            {
+                                x++;
+                            }
+                            else if (refsNext && !refs)
+                            {
+                                use = false;
+                                break;
+                            }
+                            else
+                            {
+                                x++;
+                            }*/
                             //Console.WriteLine($"[INFO] skipping next for priority 0x{blk.Offset:X}-{blk.Size}-{blk.ExpandedSize}-{blk.type} | 0x{next.Offset:X}-{next.Size}-{next.ExpandedSize}-{next.type}");
-                            i++;
+                            //i++;
+                            x++;
                         }
                         else
                         {
                             break;
                         }
                     }
+                    if (use)
+                    {
+                        list.Add(new LzBlock(blk.Offset, blk.Size, blk.ExpandedSize, blk.type));
+                        i = x;
+                    }
+
                     //}
 
                 }
@@ -365,6 +385,49 @@ namespace BatterylessPatcher
             return false;
         }
 
+        static bool isPointerPresentFiltered(byte[] data, uint targetAddr, bool alsoThumb, List<LzBlock> allLz)
+        {
+            int n = data.Length;
+            var res = new List<(int, bool)>();
+            byte[] word = BitConverter.GetBytes(targetAddr);
+            byte[] wordThumb = BitConverter.GetBytes(targetAddr | 1);
+            for (int i = 0; i <= n - 4; i += 4)
+            {
+                if (data[i] == word[0]
+                    && data[i + 1] == word[1]
+                    && data[i + 2] == word[2]
+                    && data[i + 3] == word[3])
+                {
+                    if (Utils.isInsideBlock(i, i + 4, allLz) == null)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        //skip fake pointers (bytes that loooked like a pointer to that but were data inside a lz block)
+                        //Console.WriteLine($"[WARN] pointer was inside block, skipped");
+                    }
+                }
+                else if (alsoThumb &&
+                         data[i] == wordThumb[0]
+                      && data[i + 1] == wordThumb[1]
+                      && data[i + 2] == wordThumb[2]
+                      && data[i + 3] == wordThumb[3])
+                {
+                    if (Utils.isInsideBlock(i, i + 4, allLz) == null)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        //skip fake pointers (bytes that loooked like a pointer to that but were data inside a lz block)
+                        //Console.WriteLine($"[WARN] pointer was inside block, skipped");
+                    }
+                }
+            }
+            return false;
+        }
+
         static List<(int Off, bool IsThumb)> ScanPointerPositions(byte[] data, uint targetAddr, bool alsoThumb)
         {
             int n = data.Length;
@@ -389,6 +452,49 @@ namespace BatterylessPatcher
                     res.Add((i, true));
                 }
             }
+            return res;
+        }  
+        static List<(int Off, bool IsThumb)> ScanPointerPositionsFiltered(byte[] data, uint targetAddr, bool alsoThumb, List<LzBlock> allLz)
+        {
+            int n = data.Length;
+            var res = new List<(int, bool)>();
+            byte[] word = BitConverter.GetBytes(targetAddr);
+            byte[] wordThumb = BitConverter.GetBytes(targetAddr | 1);
+            for (int i = 0; i <= n - 4; i += 4)
+            {
+                if (data[i] == word[0]
+                    && data[i + 1] == word[1]
+                    && data[i + 2] == word[2]
+                    && data[i + 3] == word[3])
+                {
+                    if (Utils.isInsideBlock(i, i + 4, allLz) == null)
+                    {
+                        res.Add((i, false));
+                    }
+                    else
+                    {
+                        //skip fake pointers (bytes that loooked like a pointer to that but were data inside a lz block)
+                        //Console.WriteLine($"[WARN] pointer was inside block, skipped");
+                    }     
+                }
+                else if (alsoThumb &&
+                         data[i] == wordThumb[0]
+                      && data[i + 1] == wordThumb[1]
+                      && data[i + 2] == wordThumb[2]
+                      && data[i + 3] == wordThumb[3])
+                {
+                    if (Utils.isInsideBlock(i, i + 4, allLz) == null)
+                    {
+                        res.Add((i, true));
+                    }
+                    else
+                    {
+                        //skip fake pointers (bytes that loooked like a pointer to that but were data inside a lz block)
+                        //Console.WriteLine($"[WARN] pointer was inside block, skipped");
+                    }
+                }
+            }
+            
             return res;
         }
 
