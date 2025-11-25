@@ -44,3 +44,10 @@ But, If by repacking the size went down to 16mb (doubt it, anyway), they could t
 
 
 Keep in mind that as of now the patched ROMS haven’t been texted extensively (but I’ve tested first save, multiple save overwrites etc)
+
+
+## Credits:
+
+[Flash1M_Repro_SRAM_Patcher](https://github.com/bbsan2k/Flash1M_Repro_SRAM_Patcher)
+
+Whoever made the Aliexpress patch
