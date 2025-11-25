@@ -42,29 +42,57 @@
             byte[] outRom = rom;
 
             bool repack = forceRepack;
+            bool hardRepack = forceRepack;
             if (!forceRepack)
             {
                 int blobCheck = Utils.FindFirstFreeForBlob(outRom, freeSpaceWanted, 0, 0, "blob", 0x1000, new() { }, false);
                 if (blobCheck == -1)
                 {
-                    Console.WriteLine("[WARN] No enough space to put blob and save area, will try to relocate LZ blobs");
+                    Console.WriteLine("[WARN] No enough free space, will try to repack");
                     repack = true;
+                    if (outRom.Length > 0x01000000)
+                    {
+                        Console.WriteLine("[WARN] ROM is also over 16M, will try to hard repack");
+                        hardRepack = true;
+                    }
                 }
-                if(outRom.Length> 0x01000000)
+                else
                 {
-                    Console.WriteLine("[WARN] ROM over 16M, will try to repack");
-                    repack = true;
+                    if (outRom.Length > 0x01000000)
+                    {
+                        Console.WriteLine("[WARN] ROM over 16M, will try to soft repack");
+                        repack = true;
+                    }
                 }
             }
             if (repack)
             {
-                Console.WriteLine("[WARN] WARNING!!! Repacking on heavily modified ROMs relocating could break something");
-                Console.WriteLine("[INFO] Repacking to apply patches");
-                outRom = Repack.repack(rom, new() { }, "16m");
+                bool retry = false;
+                outRom = Repack.repack(rom, new() { }, !hardRepack, "16m");
+                if (!hardRepack)
+                {
+                    if (outRom.Length > 0x01000000)
+                    {
+                        Console.WriteLine("[WARN] ROM still over 16M, will try hard repack");
+                        retry = true;
+                        hardRepack = true;
+                    }
+                    int blobCheck = Utils.FindFirstFreeForBlob(outRom, freeSpaceWanted, 0, 0, "blob", 0x1000, new() { }, false);
+                    if (blobCheck == -1)
+                    {
+                        Console.WriteLine("[WARN] No enough free space after repack, will try hard repack");
+                        retry = true;
+                        hardRepack = true;
+                    }
+                }
+                if (retry)
+                {
+                    outRom = Repack.repack(rom, new() { }, !hardRepack, "16m");
+                }
             }
             if (outRom.Length > 0x01000000)
             {
-                String err = "[ERR] ROM over 16M, cannot patch";
+                String err = "[ERR] ROM still over 16M, cannot patch";
                 Console.WriteLine(err);
                 throw new InvalidOperationException(err);
             }

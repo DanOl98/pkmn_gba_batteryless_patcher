@@ -15,7 +15,7 @@ namespace BatterylessPatcher
             
         }
 
-        public static byte[] repack(byte[] data, List<ForbiddenArea> forbiddenAreas, string TruncateMode = "auto")
+        public static byte[] repack(byte[] data, List<ForbiddenArea> forbiddenAreas, bool soft = false, string TruncateMode = "auto")
         {
             byte[] originalData = new byte[data.Length];
             // copia
@@ -23,16 +23,61 @@ namespace BatterylessPatcher
             var opt = new Options();
 
             int n = data.Length;
+            Console.WriteLine($"[WARN] WARNING!!! Repacking on heavily modified ROMs could break something");
+            Console.WriteLine($"[INFO] {(soft? "Soft" : "Hard" )} repacking");
             Console.WriteLine($"[INFO] ROM size = {n} (0x{n:X})");
-
-            //tutti i blocchi LZ validi
-            List<LzBlock> allLz = ScanAllLzBlocks(data, 0, 0, opt);
-            Console.WriteLine($"[INFO] LZ blocks found: {allLz.Count}");
-            //clear all
-            for (int i = 0; i < allLz.Count; i++)
+            List<LzBlock> allLzBlocks = ScanAllLzBlocks(data, 0, 0, opt);
+            uint scanStart = 0x01000000;
+            //trovo primo blocco intorno a 0x01000000 per provare a relocare solo i blocchi oltre i 16M
+            if (soft)
             {
-                Console.Write($"\r[CLEAR] clearing blocks - {(i + 1).ToString().PadLeft(5, '0')}/{allLz.Count.ToString().PadLeft(5, '0')}");
-                var blk = allLz[i];
+                //tutti i blocchi LZ validi
+                //they are already ordered by offset so no need to resort
+                for (int i = 0; i < allLzBlocks.Count; i++)
+                {
+                    var blk = allLzBlocks[i];
+                    int end = blk.getEnd();
+                    if ((end > 0x01000000 && blk.Offset < 0x01000000) || blk.Offset >= 0x01000000)
+                    {
+                        //my starting point
+                        scanStart = (uint)blk.Offset;
+                        break;
+                    }
+                }
+            }
+            //tutti i blocchi LZ validi
+            List<LzBlock> toRelocateBlocks = new List<LzBlock>();
+            if (soft)
+            {
+                
+                for (int i = 0; i < allLzBlocks.Count; i++)
+                {
+                    var blk = allLzBlocks[i];
+                    if (blk.Offset >= scanStart)
+                    {
+                        toRelocateBlocks.Add(blk);
+                    }else if (blk.Offset % 4 != 0)
+                    {
+                        //also fix blocks in wrong positions because why not, some ROMs are broken because of this
+                        toRelocateBlocks.Add(blk);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < allLzBlocks.Count; i++)
+                {
+                    var blk = allLzBlocks[i];
+                    toRelocateBlocks.Add(blk);
+                }
+            }
+            Console.WriteLine($"[INFO] LZ blocks found: {allLzBlocks.Count}");
+            Console.WriteLine($"[INFO] LZ blocks to relocate: {toRelocateBlocks.Count}");
+            //clear all
+            for (int i = 0; i < toRelocateBlocks.Count; i++)
+            {
+                Console.Write($"\r[CLEAR] clearing blocks - {(i + 1).ToString().PadLeft(5, '0')}/{toRelocateBlocks.Count.ToString().PadLeft(5, '0')}");
+                var blk = toRelocateBlocks[i];
                 int src = blk.Offset;
                 int size = blk.Size;
                 // azzera sorgente (PRIMA SE NO SOVRASCRIVO ROBA COPIATA SOPRA!!
@@ -43,9 +88,9 @@ namespace BatterylessPatcher
                 //if empty/padding, clear area after
                 int clearAfter = 0;
                 int checkStart = (blk.getEnd() + 1);
-                if (i < allLz.Count - 1)
+                if (i < toRelocateBlocks.Count - 1)
                 {
-                    LzBlock next = allLz[i + 1];
+                    LzBlock next = toRelocateBlocks[i + 1];
 
                     int difference = next.Offset - checkStart;
 
@@ -59,27 +104,43 @@ namespace BatterylessPatcher
 
 
             }
-            Console.Write("\r\n");
+            if(toRelocateBlocks.Count>0) Console.Write("\r\n");
 
             //ordino per size in modo da non andarmi sopra
-            allLz.Sort((a, b) =>
+            toRelocateBlocks.Sort((a, b) =>
              {
                  return a.Size.CompareTo(b.Size);
              });
             //allLz = allLz.OrderBy(o => o.Size).ToList();
-            var firstLz = allLz.OrderBy(o => o.Offset).ToList().First();
+            var firstLz = allLzBlocks.OrderBy(o => o.Offset).ToList().First();
             int lastSize = 0;
             int movedRef = 0;
             int movedOrph = 0, movedFromForbidden = 0;
             int lastMoved = firstLz.Offset;
-            for (int i = 0; i < allLz.Count; i++)
+            for (int i = 0; i < toRelocateBlocks.Count; i++)
             {
-                var blk = allLz[i];
+                var blk = toRelocateBlocks[i];
                 uint addr = PTR_BASE + (uint)blk.Offset;
-                var refs = ScanPointerPositionsFiltered(data, addr, opt.AlsoThumb, allLz);
+                var refs = ScanPointerPositionsFiltered(data, addr, opt.AlsoThumb, allLzBlocks);
                 int src = blk.Offset;
                 int size = blk.Size;
-                int dst = Utils.FindFirstFreeForSprite(data, size, lastMoved, opt.Align, forbiddenAreas, allLz, blk);
+                int dst = Utils.FindFirstFreeForSprite(data, size, lastMoved, opt.Align, forbiddenAreas, allLzBlocks, blk);
+                if (soft)
+                {
+                    while(dst != -1)
+                    {
+                        LzBlock? blockInside = Utils.isInsideBlock(dst, dst + size -1, allLzBlocks);
+                        if (blockInside == null)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            lastMoved = blockInside.getEnd() + 1;
+                            dst = Utils.FindFirstFreeForSprite(data, size, lastMoved, opt.Align, forbiddenAreas, toRelocateBlocks, blk);
+                        }
+                    }
+                }
                 uint oldAddr = PTR_BASE + (uint)src;
                 ForbiddenArea? inArea = isInForbiddenArea(src, src + size, forbiddenAreas);
                 if (inArea != null)
@@ -119,10 +180,10 @@ namespace BatterylessPatcher
                 {
                     movedOrph++;
                 }
-                Console.Write($"\r[MOVE] moving blocks - {(i + 1).ToString().PadLeft(5, '0')}/{allLz.Count.ToString().PadLeft(5, '0')} (0x{(src.ToString("X").PadLeft(6, '0'))})");
+                Console.Write($"\r[MOVE] moving blocks - {(i + 1).ToString().PadLeft(5, '0')}/{toRelocateBlocks.Count.ToString().PadLeft(5, '0')} (0x{(src.ToString("X").PadLeft(6, '0'))})");
                 //modifico per quando controllo puntatori per evitare di andare a scrivere un finto puntatore in una zona dentro a un blocco
             }
-            Console.Write("\r\n");
+            if (toRelocateBlocks.Count > 0) Console.Write("\r\n");
 
             Console.WriteLine($"[SUMMARY] moved with refs = {movedRef} | moved orphans = {movedOrph}");
 
@@ -142,9 +203,9 @@ namespace BatterylessPatcher
 
             Console.WriteLine($"[INFO] rescanning LZ blocks");
             var blocks2 = ScanAllLzBlocks(data, 0, 0, opt);
-            if (allLz.Count != blocks2.Count)
+            if (allLzBlocks.Count != blocks2.Count)
             {
-                String err = $"[ERR] Blocks count changed: old {allLz.Count} and new {blocks2.Count}";
+                String err = $"[ERR] Blocks count changed: old {allLzBlocks.Count} and new {blocks2.Count}";
                 Console.WriteLine(err);
                 throw new InvalidOperationException(err);
             }
@@ -275,10 +336,8 @@ namespace BatterylessPatcher
                         }
                         else
                         {
-                            if (i >= 0x01000000)
-                            {
-                                Console.WriteLine($"[INFO] invalid block at {i:X}, size {size}");
-                            }
+                            //debug
+                            //Console.WriteLine($"[INFO] invalid block at {i:X}, size {size}");                 
                         }
                     }
                 }

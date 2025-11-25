@@ -12,7 +12,8 @@
             //btnPatchBad.Enabled = enable;
             //btnPatchGood.Enabled = enable;
             btnPatchGood2.Enabled = enable;
-            btnRepackOnly.Enabled = enable;
+            btnHardRepackOnly.Enabled = enable;
+            btnSoftRepackOnly.Enabled = enable;
             repackCheck.Enabled = enable;
             //outputText.Enabled = enable;
         }
@@ -178,6 +179,26 @@
 
         private void BtnRepackOnly_Click(object? sender, EventArgs e)
         {
+            repack(false);
+        }
+
+        private void MainWindow_Load(object sender, EventArgs e)
+        {
+            Console.SetOut(new ControlWriter(outputText));
+            Console.WriteLine("POKEMON GBA PATCHER FOR BOOTLEG CARTRIDGES");
+        }
+
+        private void outputText_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnSoftRepackOnly_Click(object sender, EventArgs e)
+        {
+            repack(true);
+        }
+        private void repack(bool soft)
+        {
             if (string.IsNullOrWhiteSpace(txtRomPath.Text) || !File.Exists(txtRomPath.Text))
             {
                 MessageBox.Show(this, "First select a valid GBA ROM file", "Attenzione",
@@ -195,7 +216,7 @@
 
                     byte[] rom = File.ReadAllBytes(txtRomPath.Text);
 
-                    var result = Repack.repack(rom, new() { });
+                    var result = Repack.repack(rom, new() { }, soft);
 
                     string outPath = Path.Combine(
                         Path.GetDirectoryName(txtRomPath.Text)!,
@@ -221,17 +242,6 @@
                     this.Invoke(new Action(() => enableDisableControls(true)));
                 }
             }).Start();
-        }
-
-        private void MainWindow_Load(object sender, EventArgs e)
-        {
-            Console.SetOut(new ControlWriter(outputText));
-            Console.WriteLine("POKEMON GBA PATCHER FOR BOOTLEG CARTRIDGES");
-        }
-
-        private void outputText_TextChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

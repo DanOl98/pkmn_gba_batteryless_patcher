@@ -31,10 +31,11 @@
             btnBrowse = new Button();
             repackCheck = new CheckBox();
             btnPatchGood2 = new Button();
-            btnRepackOnly = new Button();
+            btnHardRepackOnly = new Button();
             ofd = new OpenFileDialog();
             txtRomPath = new TextBox();
             outputText = new RichTextBox();
+            btnSoftRepackOnly = new Button();
             SuspendLayout();
             // 
             // btnBrowse
@@ -64,14 +65,14 @@
             btnPatchGood2.Text = "Apply Patch";
             btnPatchGood2.Click += BtnPatchGood2_Click;
             // 
-            // btnRepackOnly
+            // btnHardRepackOnly
             // 
-            btnRepackOnly.Location = new Point(12, 339);
-            btnRepackOnly.Name = "btnRepackOnly";
-            btnRepackOnly.Size = new Size(160, 50);
-            btnRepackOnly.TabIndex = 6;
-            btnRepackOnly.Text = "Repack only";
-            btnRepackOnly.Click += BtnRepackOnly_Click;
+            btnHardRepackOnly.Location = new Point(12, 339);
+            btnHardRepackOnly.Name = "btnHardRepackOnly";
+            btnHardRepackOnly.Size = new Size(160, 50);
+            btnHardRepackOnly.TabIndex = 6;
+            btnHardRepackOnly.Text = "Hard Repack only";
+            btnHardRepackOnly.Click += BtnRepackOnly_Click;
             // 
             // txtRomPath
             // 
@@ -92,6 +93,15 @@
             outputText.Text = "";
             outputText.TextChanged += outputText_TextChanged;
             // 
+            // btnSoftRepackOnly
+            // 
+            btnSoftRepackOnly.Location = new Point(12, 283);
+            btnSoftRepackOnly.Name = "btnSoftRepackOnly";
+            btnSoftRepackOnly.Size = new Size(160, 50);
+            btnSoftRepackOnly.TabIndex = 6;
+            btnSoftRepackOnly.Text = "Soft Repack only";
+            btnSoftRepackOnly.Click += btnSoftRepackOnly_Click;
+            // 
             // MainWindow
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -103,7 +113,8 @@
             Controls.Add(btnBrowse);
             Controls.Add(repackCheck);
             Controls.Add(btnPatchGood2);
-            Controls.Add(btnRepackOnly);
+            Controls.Add(btnSoftRepackOnly);
+            Controls.Add(btnHardRepackOnly);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             Name = "MainWindow";
@@ -117,10 +128,11 @@
         #endregion
         private Button btnBrowse;
         private Button btnPatchGood2;
-        private Button btnRepackOnly;
+        private Button btnHardRepackOnly;
         private CheckBox repackCheck;
         private OpenFileDialog ofd;
         private TextBox txtRomPath;
         private RichTextBox outputText;
+        private Button btnSoftRepackOnly;
     }
 }
