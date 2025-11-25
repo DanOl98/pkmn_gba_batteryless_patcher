@@ -49,13 +49,11 @@
             // 
             // repackCheck
             // 
-            repackCheck.Checked = true;
-            repackCheck.CheckState = CheckState.Checked;
             repackCheck.Location = new Point(12, 109);
             repackCheck.Name = "repackCheck";
             repackCheck.Size = new Size(160, 50);
             repackCheck.TabIndex = 2;
-            repackCheck.Text = "Repack while applying patch";
+            repackCheck.Text = "Force repack while applying patch";
             // 
             // btnPatchGood2
             // 
@@ -68,7 +66,7 @@
             // 
             // btnRepackOnly
             // 
-            btnRepackOnly.Location = new Point(12, 165);
+            btnRepackOnly.Location = new Point(12, 339);
             btnRepackOnly.Name = "btnRepackOnly";
             btnRepackOnly.Size = new Size(160, 50);
             btnRepackOnly.TabIndex = 6;

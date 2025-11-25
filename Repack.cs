@@ -43,13 +43,13 @@ namespace BatterylessPatcher
 
                 //if empty/padding, clear area after
                 int clearAfter = 0;
-                int checkStart = (blk.getEnd() + 1); 
+                int checkStart = (blk.getEnd() + 1);
                 if (i < allLz.Count - 1)
                 {
                     LzBlock next = allLz[i + 1];
-                    
+
                     int difference = next.Offset - checkStart;
-                   
+
                     if (Utils.FreeAtConsideringZeroValid(checkStart, difference, data) >= difference)
                     {
                         clearAfter = difference;
@@ -251,13 +251,13 @@ namespace BatterylessPatcher
         }
 
 
-
         static List<LzBlock> ScanAllLzBlocks(byte[] data, uint scanStart, int minSize, Options opt)
         {
             var list = new List<LzBlock>();
             var possibleBlocks = new List<LzBlock>();
             int n = data.Length;
             Console.WriteLine($"[INFO] scanning possible LZ blocks");
+            //in some roms, some lz blocks do not start at %4, so cannot search just %4 position
             for (int i = (int)scanStart; i < n; i++)
             {
                 if (data[i] == 0x10)
@@ -280,21 +280,9 @@ namespace BatterylessPatcher
                             int type = Utils.IsLikelyValidLz(decompressed);
                             if (type >= 0)
                             {
-                                if(i + size < data.Length)
-                                {
-                                    if((i + size) %4 != 0)
-                                    {
-                                        if (data[i + size] != 0xff && data[i + size] != 0x00)
-                                        {
-                                            //next block cannot start before %4, if it does something is wrong, unless is script
-                                            if(! Utils.LikelyScriptArea(data, i + size))
-                                            {
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
+
                                 possibleBlocks.Add(new LzBlock(i, size, decompressed.Length, type));
+
                             }
 
                         }
@@ -330,7 +318,8 @@ namespace BatterylessPatcher
                         LzBlock next = possibleBlocks[i + 1];
                         if (!Utils.isSafeInBlock(next.Offset, next.getEnd(), blk))
                         {
-                            //Console.WriteLine($"[INFO] skipping next for precedence 0x{blk.Offset:X}-{blk.Size}-{blk.ExpandedSize}-{blk.type} | 0x{next.Offset:X}-{next.Size}-{next.ExpandedSize}-{next.type}");
+
+                            //Console.WriteLine($"[INFO] skipping next for priority 0x{blk.Offset:X}-{blk.Size}-{blk.ExpandedSize}-{blk.type} | 0x{next.Offset:X}-{next.Size}-{next.ExpandedSize}-{next.type}");
                             i++;
                         }
                         else

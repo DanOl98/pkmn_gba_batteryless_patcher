@@ -159,7 +159,7 @@
             for (int i = off; i < rom.Length; i++) if (rom[i] != 0xFF && rom[i] != 0x00) return false;
             return true;
         }
-        public static int FindFirstFreeForBlob(byte[] rom, int size, int preferred, int minStart, String type = "blob", int positionMultipleOf = 0x1000, List<ForbiddenArea>? forbiddenAreas = null)
+        public static int FindFirstFreeForBlob(byte[] rom, int size, int preferred, int minStart, String type = "blob", int positionMultipleOf = 0x1000, List<ForbiddenArea>? forbiddenAreas = null, bool exceptionIfNotFound = true)
         {
             if (size <= 0) throw new ArgumentException($"Dimensione {type} nulla.");
 
@@ -190,8 +190,14 @@
                     off = Utils.AlignUp(off += size, positionMultipleOf) - positionMultipleOf;
                 }
             }
-
-            throw new InvalidOperationException($"Nessuna regione FF abbastanza grande per {type}.");
+            if (exceptionIfNotFound)
+            {
+                throw new InvalidOperationException($"No region FF big enough for {type}.");
+            }
+            else
+            {
+                return -1;
+            }
         }
         public class ForbiddenArea
         {
