@@ -4,6 +4,39 @@
     {
         public const uint ROM_BASE = 0x08000000;
 
+        static byte[] commonScriptOpcodes = new byte[] {
+    0x02, // goto
+    0x03, // call
+    0x04, // return
+    0x05, // jumpstd
+    0x06, // jump
+    0x1F, // lock
+    0x20, // release
+    0x29, // msgbox
+    0x6A, // callasm
+    0x7B, // applymovement
+    0x7D, // waitmovement
+    0x90, // pause
+    0x91, // setvar
+    0x92, // addvar
+};
+
+
+        public static bool LikelyScriptArea(byte[] rom, int offset)
+        {
+            //out of rom
+            if (offset >= rom.Length)
+                return false;
+
+            byte next = rom[offset];
+            // next is common script op code
+            if (commonScriptOpcodes.Contains(next))
+                return true;
+
+            return false;
+        }
+
+
         public static void CopyBlobAndFixInternals(byte[] rom, byte[] blob, int oldOffset, int newOffset, Dictionary<uint, byte[]> toReplaceCalls, Dictionary<uint, byte[]> toReplaceCallsFirst)
         {
             // copy blob
@@ -31,7 +64,7 @@
                     PatchJump(rom, pos, newVal);
                 }
                 //fix known external pointers (idk what some are, they don't look like anything with sense on the original rom. the games work without repointing those, maybe leftover in the blob for other games? idk)
-                else if((val & 0xFF000000) == 0x08000000)
+                else if ((val & 0xFF000000) == 0x08000000)
                 {
                     if (toReplaceCalls.ContainsKey(val))
                     {
@@ -47,7 +80,7 @@
                         uint newVal = (uint)found + ROM_BASE;
                         PatchJump(rom, pos, newVal);
                     }
-                    
+
                 }
             }
         }
@@ -65,7 +98,8 @@
                         rom[i] = newSaveBase;
                     }
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Console.WriteLine(e.Message);
                 Console.WriteLine(e.StackTrace);
@@ -125,10 +159,10 @@
             for (int i = off; i < rom.Length; i++) if (rom[i] != 0xFF && rom[i] != 0x00) return false;
             return true;
         }
-        public static int FindFirstFreeForBlob(byte[] rom, int size, int preferred, int minStart, String type = "blob", int positionMultipleOf = 0x1000, List<ForbiddenArea> ? forbiddenAreas = null)
+        public static int FindFirstFreeForBlob(byte[] rom, int size, int preferred, int minStart, String type = "blob", int positionMultipleOf = 0x1000, List<ForbiddenArea>? forbiddenAreas = null)
         {
             if (size <= 0) throw new ArgumentException($"Dimensione {type} nulla.");
-            
+
             if (preferred > 0 && FreeAtConsideringZeroValid(preferred, size, rom) >= size) return preferred;
 
             // Allinea il minStart al successivo multiplo di positionMultipleOf
@@ -198,12 +232,12 @@
         {
             foreach (LzBlock block in blocks)
             {
-    
-                    if (!isSafeInBlock(start, end, block))
-                    {
-                        return block;
-                    }
-                
+
+                if (!isSafeInBlock(start, end, block))
+                {
+                    return block;
+                }
+
             }
             return null;
         }
@@ -226,7 +260,7 @@
             }
         }
 
-   
+
         public static int IsLikelyValidLz(byte[] decompressed)
         {
 
@@ -565,20 +599,20 @@
             return ok > numColors * 3 / 4;
         }
 
-        public static int FindFirstFreeForSprite(byte[] rom, int size, int minStart,int alignTo, List<ForbiddenArea> forbiddenAreas, List<LzBlock> allLz, LzBlock currentBlock)
+        public static int FindFirstFreeForSprite(byte[] rom, int size, int minStart, int alignTo, List<ForbiddenArea> forbiddenAreas, List<LzBlock> allLz, LzBlock currentBlock)
         {
-           
-            minStart = Utils.AlignUp(minStart, alignTo); 
+
+            minStart = Utils.AlignUp(minStart, alignTo);
             for (int off = minStart; off + size <= rom.Length; off += alignTo)
             {
                 ForbiddenArea? inArea = isInForbiddenArea(off, off + size, forbiddenAreas);
                 if (inArea != null)
                 {
-                    off = Utils.AlignUp(inArea.End, alignTo) - ((inArea.End%alignTo)==0? 0 : alignTo);
+                    off = Utils.AlignUp(inArea.End, alignTo) - ((inArea.End % alignTo) == 0 ? 0 : alignTo);
                     continue;
                 }
 
-                if (FreeAt(off, size, rom)>= size)
+                if (FreeAt(off, size, rom) >= size)
                 {
 
                     return off;
@@ -608,15 +642,15 @@
             return first;
         }
 
- 
+
 
         public static List<int> FindAll(byte[] rom, byte[] pattern)
         {
-            List<int> list = new List<int>();  
+            List<int> list = new List<int>();
             int n = rom.Length - pattern.Length;
             for (int i = 0; i <= n; i++)
             {
-                if(rom[i] == pattern[0])
+                if (rom[i] == pattern[0])
                 {
                     int j = 0;
                     for (j = 0; j < pattern.Length; j++)

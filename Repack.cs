@@ -41,6 +41,24 @@ namespace BatterylessPatcher
                 for (int x = 0; x < size; x++)
                     data[src + x] = FILL;
 
+                //if empty/padding, clear area after
+                int clearAfter = 0;
+                int checkStart = (blk.getEnd() + 1); 
+                if (i < allLz.Count - 1)
+                {
+                    LzBlock next = allLz[i + 1];
+                    
+                    int difference = next.Offset - checkStart;
+                   
+                    if (Utils.FreeAtConsideringZeroValid(checkStart, difference, data) >= difference)
+                    {
+                        clearAfter = difference;
+                    }
+                }
+                for (int x = 0; x < clearAfter; x++)
+                    data[checkStart + x] = FILL;
+
+
             }
             Console.Write("\r\n");
 
@@ -71,10 +89,7 @@ namespace BatterylessPatcher
                 }
                 if (dst == -1)
                 {
-                    byte[] decompressed = Utils.LzDecompress(originalData, (int)blk.Offset);
-                    int looksLike = Utils.IsLikelyValidLz(decompressed);
-
-                    Console.WriteLine($"[ERR] invalid size at offset 0x{blk.Offset:x}, size {blk.Size}, expanded {blk.ExpandedSize}, size {decompressed.Length}, looked like {looksLike}");
+                    Console.WriteLine($"[ERR] invalid size at offset 0x{blk.Offset:x}, size {blk.Size}, expanded {blk.ExpandedSize} looked like {blk.type}");
                     continue;
                 }
 
@@ -202,21 +217,28 @@ namespace BatterylessPatcher
                         truncSize = 0x02000000;
                     }
                 }
-                int truncLen = data.Length - truncSize;
-                //sometimes in the end there is junk (some 00)
-                if (truncLen != data.Length)
+                if (truncSize != -1)
                 {
-                    int freebytes = Utils.FreeAtConsideringZeroValid(truncSize, truncLen, data);
-                    if (freebytes >= truncLen)
+                    int truncLen = data.Length - truncSize;
+                    //sometimes in the end there is junk (some 00)
+                    if (truncSize < data.Length)
                     {
-                        byte[] data2 = new byte[truncSize];
-                        Buffer.BlockCopy(data, 0, data2, 0, truncSize);
-                        data = data2;
-                        Console.WriteLine($"[INFO] truncated to {truncSize}");
+                        int freebytes = Utils.FreeAtConsideringZeroValid(truncSize, truncLen, data);
+                        if (freebytes >= truncLen)
+                        {
+                            byte[] data2 = new byte[truncSize];
+                            Buffer.BlockCopy(data, 0, data2, 0, truncSize);
+                            data = data2;
+                            Console.WriteLine($"[INFO] truncated to {truncSize}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[ERR] cannot truncate at requested mode - data not empty ({freebytes}/{truncLen})");
+                        }
                     }
                     else
                     {
-                        Console.WriteLine($"[ERR] cannot truncate at requested mode - data not empty ({freebytes}/{truncLen})");
+                        Console.WriteLine($"[INFO] no need to truncate");
                     }
                 }
                 else
@@ -240,26 +262,43 @@ namespace BatterylessPatcher
             {
                 if (data[i] == 0x10)
                 {
-                    /*bool isInPointer = false;
-                    uint val = Utils.ReadU32(data, (i - (i % 4)));
-                    if ((val & 0xFF000000) == 0x08000000)
+                    bool isInPointer = false;
+                    if (i % 4 != 0)
                     {
-                        isInPointer = true; 
-                    }
-                    if (!isInPointer)
-                    {*/
-                    int size = Utils.LzSize(data, (int)i);
-                    if (size > 0)
-                    {
-
-                        byte[] decompressed = Utils.LzDecompress(data, i);
-                        int type = Utils.IsLikelyValidLz(decompressed);
-                        if (type >= 0)
+                        uint val = Utils.ReadU32(data, (i - (i % 4)));
+                        if ((val & 0xFF000000) == 0x08000000 || (val & 0xFF000000) == 0x09000000)
                         {
-                            possibleBlocks.Add(new LzBlock(i, size, decompressed.Length, type));
+                            isInPointer = true;
                         }
                     }
-                    //}
+                    if (!isInPointer)
+                    {
+                        int size = Utils.LzSize(data, (int)i);
+                        if (size > 0)
+                        {
+                            byte[] decompressed = Utils.LzDecompress(data, i);
+                            int type = Utils.IsLikelyValidLz(decompressed);
+                            if (type >= 0)
+                            {
+                                if(i + size < data.Length)
+                                {
+                                    if((i + size) %4 != 0)
+                                    {
+                                        if (data[i + size] != 0xff && data[i + size] != 0x00)
+                                        {
+                                            //next block cannot start before %4, if it does something is wrong, unless is script
+                                            if(! Utils.LikelyScriptArea(data, i + size))
+                                            {
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                                possibleBlocks.Add(new LzBlock(i, size, decompressed.Length, type));
+                            }
+
+                        }
+                    }
                 }
             }
 
