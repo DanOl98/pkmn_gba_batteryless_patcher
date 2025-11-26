@@ -2,14 +2,37 @@
 
 internal class Program
 {
+    private static void printHelp()
+    {
+        Console.WriteLine();
+        Console.WriteLine($"Usage:");
+        Console.WriteLine();
+        Console.WriteLine($"{"-i or -input inputfilename".PadRight(30)} | specify the input ROM");
+        Console.WriteLine();
+        Console.WriteLine($"{"-o or -output outputfilename".PadRight(30)} | specify where the output ROM will be saved (optional, if not specified, the output file will be saved in the same directory as the input file with the .batteryless.gba extension)");
+        Console.WriteLine();
+        Console.WriteLine($"{"-s or -save savefilename".PadRight(30)} | specify the input save data file to inject (.sav) (optional)");
+        Console.WriteLine();
+        Console.WriteLine($"{"-fr or -forcerepack".PadRight(30)} | force a full hard repack of the ROM (UNSAFE!! could break some ROMs)");
+        Console.WriteLine();
+        Console.WriteLine($"{"-h or -help".PadRight(30)} | print this help");
+        Console.WriteLine();
+
+    }
     private static void Main(string[] args)
     {
         String filename = "";
         String outputname = "";
         String savetoinject = "";
         bool forcerepack = false;
+        if (args.Length == 0)
+        {
+            printHelp();
+            return;
+        }
+
         for (var i = 0; i < args.Length; i++)
-        {     
+        {    
             switch (args[i])
             {
                 case "-i":
@@ -63,10 +86,16 @@ internal class Program
                         forcerepack = true;
                         break;
                     }
+                case "-h":
+                case "-help":
+                    {
+                        printHelp();
+                        return;
+                    }
                 default:
                     {
                         Console.WriteLine($"Unrecognized arg {args[i]}");
-                        break;
+                        return;
                     }
             }
         }
