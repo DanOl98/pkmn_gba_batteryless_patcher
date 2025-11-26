@@ -21,6 +21,7 @@ This tool is a fully automated and relocatable batteryless save patcher for Pok√
 4. Copies the patch blob found on the Aliexpress cartridges  
 5. Repoints all the references to that relocated blob  
 6. Edits that blob to relocate the save area to wherever there is free space on the ROM
+7. (OPTIONAL) Inject save data if selected
 
 ---
 
