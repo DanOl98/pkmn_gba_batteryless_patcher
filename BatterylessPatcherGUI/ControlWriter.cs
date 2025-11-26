@@ -16,6 +16,7 @@ namespace BatterylessPatcher
         public static void ScrollToBottom(RichTextBox MyRichTextBox)
         {
             SendMessage(MyRichTextBox.Handle, WM_VSCROLL, (IntPtr)SB_PAGEBOTTOM, IntPtr.Zero);
+            MyRichTextBox.SelectionStart = MyRichTextBox.Text.Length;
         }
         private RichTextBox textbox;
         private String buffer = "";

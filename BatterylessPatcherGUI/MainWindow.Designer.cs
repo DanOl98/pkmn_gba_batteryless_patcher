@@ -98,6 +98,7 @@
             outputText.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             outputText.Location = new Point(178, 156);
             outputText.Name = "outputText";
+            outputText.ReadOnly = true;
             outputText.Size = new Size(733, 434);
             outputText.TabIndex = 7;
             outputText.Text = "";
@@ -119,7 +120,7 @@
             txtSavePath.ReadOnly = true;
             txtSavePath.Size = new Size(656, 23);
             txtSavePath.TabIndex = 9;
-            txtSavePath.Text = "No Savedata selected";
+            txtSavePath.TextChanged += txtSavePath_TextChanged;
             // 
             // btnSaveBrowse
             // 

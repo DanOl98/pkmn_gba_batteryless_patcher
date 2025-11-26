@@ -1,6 +1,6 @@
-﻿using static BatterylessPatcher.Utils;
+﻿using static BatterylessPatcherLib.Utils;
 
-namespace BatterylessPatcher
+namespace BatterylessPatcherLib
 {
 
     public class Repack
@@ -71,7 +71,7 @@ namespace BatterylessPatcher
                     toRelocateBlocks.Add(blk);
                 }
             }
-            Console.WriteLine($"[INFO] LZ blocks found: {allLzBlocks.Count}");
+            //Console.WriteLine($"[INFO] LZ blocks found: {allLzBlocks.Count}");
             Console.WriteLine($"[INFO] LZ blocks to relocate: {toRelocateBlocks.Count}");
             //clear all
             for (int i = 0; i < toRelocateBlocks.Count; i++)
@@ -180,7 +180,8 @@ namespace BatterylessPatcher
                 {
                     movedOrph++;
                 }
-                Console.Write($"\r[MOVE] moving blocks - {(i + 1).ToString().PadLeft(5, '0')}/{toRelocateBlocks.Count.ToString().PadLeft(5, '0')} (0x{(src.ToString("X").PadLeft(6, '0'))})");
+                Console.Write($"\r[MOVE] moving blocks - {(i + 1).ToString().PadLeft(5, '0')}/{toRelocateBlocks.Count.ToString().PadLeft(5, '0')}");
+                //Console.Write($"\r[MOVE] moving blocks - {(i + 1).ToString().PadLeft(5, '0')}/{toRelocateBlocks.Count.ToString().PadLeft(5, '0')} (0x{(src.ToString("X").PadLeft(6, '0'))})");
                 //modifico per quando controllo puntatori per evitare di andare a scrivere un finto puntatore in una zona dentro a un blocco
             }
             if (toRelocateBlocks.Count > 0) Console.Write("\r\n");
@@ -218,7 +219,7 @@ namespace BatterylessPatcher
             if (!skipTruncate)
             {
 
-                Console.WriteLine($"[INFO] LZ blocks found: {blocks2.Count}");
+                //Console.WriteLine($"[INFO] LZ blocks found: {blocks2.Count}");
                 int highestRefTrunc = data.Length;
                 int highestOrphanTrunc = data.Length;
                 if (TruncateMode != "16m" && TruncateMode != "32m" && TruncateMode != "auto")
@@ -409,7 +410,8 @@ namespace BatterylessPatcher
                     //}
 
                 }
-                Console.Write($"\r[INFO] current progress {i + 1}/{count} - 0x{blk.Offset:X} - found {list.Count}");
+                Console.Write($"\r[INFO] current progress {i + 1}/{count} - found {list.Count}");
+                //Console.Write($"\r[INFO] current progress {i + 1}/{count} - 0x{blk.Offset:X} - found {list.Count}");
             }
             Console.Write("\r\n");
             return list;

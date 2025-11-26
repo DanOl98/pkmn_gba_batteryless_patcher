@@ -28,8 +28,13 @@ jobs:
 
     - name: Create Build Directory
       run: |
-        mkdir ${{github.workspace}}/build
-        mkdir ${{github.workspace}}/build_embedded
+        mkdir ${{github.workspace}}/build_win
+        mkdir ${{github.workspace}}/build_win_gui
+        mkdir ${{github.workspace}}/build_embedded_win
+        mkdir ${{github.workspace}}/build_embedded_win_gui
+        mkdir ${{github.workspace}}/build_linux
+        mkdir ${{github.workspace}}/build_embedded_linux
+        mkdir ${{github.workspace}}/builds
       
     - name: Restore Packages
       run: nuget restore BatterylessPatcher.sln
@@ -39,35 +44,33 @@ jobs:
         msbuild.exe BatterylessPatcher.sln /nologo /nr:false /p:DeployOnBuild=true /p:DeleteExistingFiles=True /p:platform="Any CPU" /p:configuration="Release" /p:DebugSymbols=false /p:DebugType=None 
         
 
-    - name: Publish with .NET framework embedded in build directory
-      run: |
-        dotnet publish -c Release -r win-x64 --output ${{github.workspace}}/build_embedded -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true  BatterylessPatcher.sln
-        dir ${{github.workspace}}/build_embedded
-
     - name: Publish in build directory
       run: |
-        dotnet publish -c Release -r win-x64 --output ${{github.workspace}}/build -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true BatterylessPatcher.sln
-        dir ${{github.workspace}}/build
+        dotnet publish -c Release -r win-x64 --output ${{github.workspace}}/build_embedded_win_gui -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true  BatterylessPatcherGUI/BatterylessPatcherGUI.csproj
+        7z a builds/pkmn-gba-batteryless-GUI-win-netframework-embedded.zip build_embedded_win_gui/*
 
-    - name: Zip builds
-      run: |
-          cd ${{github.workspace}}/build
-          7z a pkmn-gba-batteryless.zip *
-          cd ${{github.workspace}}/build_embedded
-          7z a pkmn-gba-batteryless-netframework-embedded.zip *
+        dotnet publish -c Release -r win-x64 --output ${{github.workspace}}/build_embedded_win -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true  BatterylessPatcherCLI/BatterylessPatcherCLI.csproj
+        7z a builds/pkmn-gba-batteryless-console-win-netframework-embedded.zip build_embedded_win/*
+ 
+        dotnet publish -c Release -r win-x64 --output ${{github.workspace}}/build_win_gui -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true BatterylessPatcherGUI/BatterylessPatcherGUI.csproj
+        7z a builds/pkmn-gba-batteryless-GUI-win.zip build_win_gui/*
 
-    - name: Upload artifact
+        dotnet publish -c Release -r win-x64 --output ${{github.workspace}}/build_win -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true BatterylessPatcherCLI/BatterylessPatcherCLI.csproj
+        7z a builds/pkmn-gba-batteryless-console-win.zip build_win/*
+
+        dotnet publish -c Release -r linux-x64 --output ${{github.workspace}}/build_embedded_linux -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true -p:PublishSingleFile=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true  BatterylessPatcherCLI/BatterylessPatcherCLI.csproj
+        7z a builds/pkmn-gba-batteryless-console-linux-netframework-embedded.zip build_embedded_linux/*
+
+        dotnet publish -c Release -r linux-x64 --output ${{github.workspace}}/build_linux -p:DebugSymbols=false -p:DebugType=None  -p:PublishReadyToRun=true BatterylessPatcherCLI/BatterylessPatcherCLI.csproj
+        7z a builds/pkmn-gba-batteryless-console-linux.zip build_linux/*
+
+
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: BatterylessPatcher
-        path: ${{github.workspace}}/build/pkmn-gba-batteryless.zip
-    
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: BatterylessPatcher_embedded_framework
-        path: ${{github.workspace}}/build_embedded/pkmn-gba-batteryless-netframework-embedded.zip
-        
+        path: ${{github.workspace}}/builds
+  
     
   release:
     runs-on: ubuntu-latest

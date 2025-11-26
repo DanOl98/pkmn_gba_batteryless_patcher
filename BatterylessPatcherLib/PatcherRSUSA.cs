@@ -1,4 +1,4 @@
-﻿namespace BatterylessPatcher
+﻿namespace BatterylessPatcherLib
 {
     //DISABLED, BAD PATCH, THE OTHER ONE IS BETTER, NEVER IMPLEMENTED POINTERS
     public class PatcherRSUSA

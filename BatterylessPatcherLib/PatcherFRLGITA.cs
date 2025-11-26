@@ -1,4 +1,4 @@
-﻿namespace BatterylessPatcher
+﻿namespace BatterylessPatcherLib
 {
     public class PatcherFRLGITA
     {

@@ -1,7 +1,10 @@
-﻿namespace BatterylessPatcher
+﻿using BatterylessPatcherLib;
+
+namespace BatterylessPatcher
 {
     public partial class MainWindow : Form
     {
+        String default_save_text = "No Savedata selected";
         public MainWindow()
         {
             InitializeComponent();
@@ -16,7 +19,7 @@
             btnHardRepackOnly.Enabled = enable;
             btnSoftRepackOnly.Enabled = enable;
             repackCheck.Enabled = enable;
-            btnRemoveSave.Enabled = enable;
+            btnRemoveSave.Enabled = enable && File.Exists(txtSavePath.Text);
             //outputText.Enabled = enable;
         }
         private void BtnBrowse_Click(object? sender, EventArgs e)
@@ -199,6 +202,7 @@
         {
             Console.SetOut(new ControlWriter(outputText));
             Console.WriteLine("POKEMON GBA PATCHER FOR BOOTLEG CARTRIDGES");
+            resetSaveSelection();
         }
 
         private void outputText_TextChanged(object sender, EventArgs e)
@@ -260,16 +264,25 @@
         private void btnSaveBrowse_Click(object sender, EventArgs e)
         {
             if (ofd2.ShowDialog(this) == DialogResult.OK)
+            {
                 txtSavePath.Text = ofd2.FileName;
+                btnRemoveSave.Enabled = File.Exists(txtSavePath.Text);
+            }
         }
         private void resetSaveSelection()
         {
-            txtSavePath.Text = "No Savedata selected";
+            txtSavePath.Text = default_save_text;
+            btnRemoveSave.Enabled = false;
         }
 
         private void btnRemoveSave_Click(object sender, EventArgs e)
         {
             resetSaveSelection();
+        }
+
+        private void txtSavePath_TextChanged(object sender, EventArgs e)
+        {
+            btnRemoveSave.Enabled = File.Exists(txtSavePath.Text);
         }
     }
 }

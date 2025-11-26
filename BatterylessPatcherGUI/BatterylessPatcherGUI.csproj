@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\BatterylessPatcherLib\BatterylessPatcherLib.csproj" />
+	</ItemGroup>
+  <ItemGroup>
+    <Compile Update="MainWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+
+</Project>

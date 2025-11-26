@@ -1,4 +1,4 @@
-﻿namespace BatterylessPatcher
+﻿namespace BatterylessPatcherLib
 {
     public class Utils
     {
@@ -850,8 +850,8 @@
                     Console.WriteLine("[PATCH] RTC Check not found");
                     return -1;
                 }
-                Console.WriteLine("[PATCH] RTC Check patch applied");
             }
+            Console.WriteLine("[PATCH] RTC Check patch applied");
             Buffer.BlockCopy(checkPatch, 0, rom, chkAt, checkPatch.Length);
             return chkAt;
         }
