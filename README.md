@@ -8,6 +8,9 @@ But the bootleg cartridges I had? They worked perfectly. So I dumped them, compa
 
 And here we are with the result
 
+![Screenshot](https://github.com/DanOl98/pkmn_gba_batteryless_patcher/blob/main/screenshot.png?raw=true)
+
+
 ---
 
 ## What this tool does:
@@ -27,9 +30,7 @@ This tool is a fully automated and relocatable batteryless save patcher for Pok�
 
 ## Tested Working On (as of now):
 
-🟢 Pokémon Ruby based ROMS (Tried with both USA and localized versions)  
-
-🟢 Pokémon Sapphire based ROMS (Tried with both USA and localized versions)  
+🟢 Pokémon Ruby / Sapphire based ROMS (Tried with both USA and localized versions)  
 
 🟢 Pokémon FireRed / LeafGreen based ROMS (Tried with both USA and localized versions)
 
@@ -37,9 +38,12 @@ This tool is a fully automated and relocatable batteryless save patcher for Pok�
 
 ## Issues:
 
-🟡 Some heavily modified HACK Roms have problems with repacking. It may have something to do with some data (scripts?) placed far in the game data and incorrectly being identified as LZ blocks.  
-Not sure yet, but as of now I've observed this behavior only on 32mb roms, which cannot be patched anyway since as far as I know (correct me if I'm wrong) bootleg cartridges use addresses `0x09000000` to write on the SRAM so they wouldn't work anyway.  
-But, If by repacking the size went down to 16mb (doubt it, anyway), they could theoretically work.
+🟡 Some heavily modified HACK Roms have problems with repacking.
+It has something to do with some data (scripts, code etc) placed far in the game data and incorrectly being identified as LZ blocks.
+Avoid repacking if possible.
+
+🟡 LZ blocks detection (and the detection of the pointers to those blocks) isn't 100% reliable and could break games.
+Avoid repacking if possible, even though in my experience it actually fixed a ROM which had broken images by relocating them to correct offsets, but that isn't always the case.
 
 ---
 
