@@ -102,6 +102,9 @@
             int blobOff = Utils.FindFirstFreeForBlob(outRom, freeSpaceWanted, 0, 0, "blob", 0x1000, new() { });
             uint blobBase = Utils.ROM_BASE + (uint)blobOff;
             Console.WriteLine($"[INFO] blob relocated at {blobOff:X}");
+            //remove junk (only want FF in that area)
+            for (int x = 0; x < freeSpaceWanted; x++)
+                outRom[blobOff + x] = 0xFF;
             Utils.CopyBlobAndFixInternals(outRom, BLOB, originalBlobPosition, blobOff, toReplaceCalls, toReplaceCallsFirst);
             Utils.PatchROMStartOffsetToBlob(outRom, blobBase);
             int saveOff = Utils.AlignUp(blobOff, 0x10000) + 0x10000;
