@@ -9,18 +9,23 @@
         private void enableDisableControls(bool enable)
         {
             btnBrowse.Enabled = enable;
+            btnSaveBrowse.Enabled = enable;
             //btnPatchBad.Enabled = enable;
             //btnPatchGood.Enabled = enable;
             btnPatchGood2.Enabled = enable;
             btnHardRepackOnly.Enabled = enable;
             btnSoftRepackOnly.Enabled = enable;
             repackCheck.Enabled = enable;
+            btnRemoveSave.Enabled = enable;
             //outputText.Enabled = enable;
         }
         private void BtnBrowse_Click(object? sender, EventArgs e)
         {
             if (ofd.ShowDialog(this) == DialogResult.OK)
+            {
                 txtRomPath.Text = ofd.FileName;
+                resetSaveSelection();
+            }
         }
 
         private void BtnPatchGood_Click(object? sender, EventArgs e)
@@ -39,13 +44,17 @@
 
                 try
                 {
-
+                    byte[] savedata = [];
+                    if (File.Exists(txtSavePath.Text))
+                    {
+                        savedata = File.ReadAllBytes(txtSavePath.Text);
+                    }
                     Console.WriteLine($"[INFO] Starting to patch {txtRomPath.Text}");
 
                     byte[] rom = File.ReadAllBytes(txtRomPath.Text);
 
                     var result = PatcherRSITA.ApplyBatterylessPatch(
-        rom,
+        rom, savedata,
         repackCheck.Checked
     );
 
@@ -145,9 +154,13 @@
                     Console.WriteLine($"[INFO] Starting to patch {txtRomPath.Text}");
 
                     byte[] rom = File.ReadAllBytes(txtRomPath.Text);
-
+                    byte[] savedata = [];
+                    if (File.Exists(txtSavePath.Text))
+                    {
+                        savedata = File.ReadAllBytes(txtSavePath.Text);
+                    }
                     var result = PatcherFRLGITA.ApplyBatterylessPatch(
-        rom,
+        rom, savedata,
         repackCheck.Checked
     );
 
@@ -242,6 +255,21 @@
                     this.Invoke(new Action(() => enableDisableControls(true)));
                 }
             }).Start();
+        }
+
+        private void btnSaveBrowse_Click(object sender, EventArgs e)
+        {
+            if (ofd2.ShowDialog(this) == DialogResult.OK)
+                txtSavePath.Text = ofd2.FileName;
+        }
+        private void resetSaveSelection()
+        {
+            txtSavePath.Text = "No Savedata selected";
+        }
+
+        private void btnRemoveSave_Click(object sender, EventArgs e)
+        {
+            resetSaveSelection();
         }
     }
 }
